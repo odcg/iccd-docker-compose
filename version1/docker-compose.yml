@@ -89,9 +89,6 @@ services:
     secrets:
       - gitlab_root_password
 
-    environment:
-      - GITLAB_OMNIBUS_CONFIG: "external_url 'http://my.domain.com/'; gitlab_rails['lfs_enabled'] = true;"
-
 
   gitlabrunner1:
     build: ./gitlabrunner1
