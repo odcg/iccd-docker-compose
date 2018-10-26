@@ -1,0 +1,59 @@
+
+version: '3'
+
+services:
+
+  jenkins1:
+    container_name: jenkins1
+    build: ./jenkins/
+    entrypoint: /bin/tini -- /usr/local/bin/jenkins.sh --prefix=/jenkins/
+    ports:
+      - "10001:8080"
+      - "10002:50000"
+    volumes:
+      - ./jenkins1:/var/jenkins_home
+
+  nexus1:
+   container_name: nexus1
+   build: nexus1
+   environment:
+      - CONTEXT_PATH=/nexus
+   ports:
+      - "10003:8081"
+   volumes:
+      - ./nexus1:/var/lib/nexus
+
+  sonarpostgresql:
+    container_name: sonarpostgresql
+    image: orchardup/postgresql:latest
+    environment:
+      - POSTGRESQL_USER=sonar
+      - POSTGRESQL_PASS=sonar
+      - POSTGRESQL_DB=sonar
+    volumes:
+      - sonarqube/:/var/lib/postgresql
+    ports:
+      - "10004:5432"
+
+  sonarqube1:
+     container_name: sonarqube1
+     build: ./sonarqube1/
+     links:
+       - postgresql:db
+     environment:
+       - DB_USER=sonar
+       - DB_PASS=sonar
+       - DB_NAME=sonar
+     ports:
+       - "10005:9000"
+       - "10006:443"
+
+  reverseproxy1:
+    container_name: reverseproxy1
+    build: ./reverseproxy1/
+    ports:
+      - "10007:80"
+    links:
+      - nexus1
+      - sonarqube1
+      - jenkins1
