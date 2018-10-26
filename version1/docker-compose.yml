@@ -1,11 +1,12 @@
 
-version: '3'
+version: '3.7'
 
 services:
 
   jenkins1:
     container_name: jenkins1
-    build: ./jenkins/
+    hostname: 'jenkins1.odcg.eu'
+    build: ./jenkins1/
     entrypoint: /bin/tini -- /usr/local/bin/jenkins.sh --prefix=/jenkins/
     ports:
       - "10001:8080"
@@ -15,7 +16,8 @@ services:
 
   nexus1:
    container_name: nexus1
-   build: nexus1
+  hostname: 'nexus1.odcg.eu'
+   build: ./nexus1/
    environment:
       - CONTEXT_PATH=/nexus
    ports:
@@ -23,23 +25,24 @@ services:
    volumes:
       - ./nexus1:/var/lib/nexus
 
-  sonarpostgresql:
-    container_name: sonarpostgresql
+  sonarqueb1postgresql:
+    container_name: sonarqueb1postgresql
     image: orchardup/postgresql:latest
     environment:
       - POSTGRESQL_USER=sonar
       - POSTGRESQL_PASS=sonar
       - POSTGRESQL_DB=sonar
     volumes:
-      - sonarqube1/:/var/lib/postgresql
+      - ./sonarqube1/:/var/lib/postgresql
     ports:
       - "10004:5432"
 
   sonarqube1:
      container_name: sonarqube1
+    hostname: 'sonarqube1.odcg.eu'
      build: ./sonarqube1/
      links:
-       - postgresql:db
+       - sonarpostgresql:db
      environment:
        - DB_USER=sonar
        - DB_PASS=sonar
@@ -62,6 +65,7 @@ services:
 
   jfrogartifactory1:
     container_name: jfrogartifactory1
+    hostname: 'jfrogartifactory1.odcg.eu'
     build: ./jfrogartifactory1/
     ports:
       - "10008:8080"
@@ -86,8 +90,8 @@ services:
     configs:
       - source: gitlab
         target: /omnibus_config.rb
-    secrets:
-      - gitlab_root_password
+#    secrets:
+#      - gitlab_root_password
 
 
   gitlabrunner1:
@@ -96,14 +100,6 @@ services:
       mode: replicated
       replicas: 2
 
-
-  kiwitcms1:
-    container_name: kiwitcms1
-    build: ./kiwitcms1/
-    ports:
-      - "10012:8080"
-    volumes:
-      - ./jfrogartifactory1/:/artifactory/
 
 
   kiwitcms1maria1:
@@ -123,13 +119,14 @@ services:
 
   kiwitcms1:
     container_name: kiwitcms1
+    hostname: 'kiwitcms1.odcg.eu'
     depends_on:
         - kiwitcms1maria1
     restart: always
     image: kiwitcms/kiwi:latest
     ports:
-      - "10013:8080"
-      - "10014:8443"
+      - "10012:8080"
+      - "10013:8443"
     volumes:
         - ./kiwitcms1:/Kiwi/uploads:Z
     environment:
@@ -141,23 +138,6 @@ services:
 
 
 
-  kiwitcms1:
-    container_name: kiwitcms1
-    depends_on:
-        - kiwitcms1maria1
-    restart: always
-    build: ./kiwitcms1
-    ports:
-      - "10013:8080"
-      - "10014:8443"
-    volumes:
-        - ./kiwitcms1:/Kiwi/uploads:Z
-    environment:
-        KIWI_DB_HOST: kiwitcms1maria1
-        KIWI_DB_PORT: 3306
-        KIWI_DB_NAME: kiwi
-        KIWI_DB_USER: kiwi
-        KIWI_DB_PASSWORD: kiwi
 
 
   drone1:
@@ -173,7 +153,7 @@ services:
 
 #selenium hub
 #selenium
-#drone
+
 
 configs:
   gitlab:
